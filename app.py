@@ -9,6 +9,11 @@ import os
 
 app = Flask(__name__)
 
+# Root route
+@app.route('/')
+def root():
+    return redirect(url_for('login'))
+
 # Configure logging to a file
 handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
