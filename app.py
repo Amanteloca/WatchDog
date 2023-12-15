@@ -5,7 +5,7 @@ from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import re
 import hashlib
-import os
+import secrets
 
 app = Flask(__name__)
 
@@ -20,7 +20,7 @@ handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
 
 # Generate a random secret key for extra protection
-app.secret_key = os.urandom(24)
+app.secret_key = secrets.token_hex(24)
 
 # Enter your database connection details below
 app.config['MYSQL_HOST'] = 'localhost'
@@ -52,6 +52,7 @@ def home():
     # User is not logged in, redirect to login page
     return redirect(url_for('login'))
 
+
 # Login route
 @app.route('/pythonlogin/', methods=['GET', 'POST'])
 def login():
@@ -62,15 +63,24 @@ def login():
         # Create variables for easy access
         username = request.form['username']
         password = request.form['password']
+        
         try:
             # Retrieve the hashed password
-            hash = password + app.secret_key
-            hash = hashlib.sha1(hash.encode())
-            password = hash.hexdigest()
+            # Encode password and secret_key as bytes
+            password_bytes = password.encode('utf-8')
+            secret_key_bytes = app.secret_key.encode('utf-8')
+
+            # Combine password and secret_key bytes before hashing
+            combined_bytes = password_bytes + secret_key_bytes
+
+            # Hash the combined bytes
+            hash_object = hashlib.sha1(combined_bytes)
+            password = hash_object.hexdigest()
 
             # Check if account exists using MySQL
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
             cursor.execute('SELECT * FROM accounts WHERE username = %s AND password = %s', (username, password,))
+
             # Fetch one record and return result
             account = cursor.fetchone()
 
@@ -80,17 +90,21 @@ def login():
                 session['loggedin'] = True
                 session['id'] = account['id']
                 session['username'] = account['username']
+
                 # Redirect to home page
                 return redirect(url_for('home'))
             else:
                 # Account doesn't exist or username/password incorrect
                 msg = 'Incorrect username/password!'
+                print("Incorrect username/password!")
+
         except Exception as e:
             app.logger.error('Error in login route: %s', str(e))
             return render_template('error.html', error=500), 500
 
     # Show the login form with message (if any)
     return render_template('index.html', msg=msg)
+
 
 # Logout route
 @app.route('/pythonlogin/logout')
@@ -102,11 +116,13 @@ def logout():
     # Redirect to login page
     return redirect(url_for('login'))
 
+
 # Registration route
 @app.route('/pythonlogin/register', methods=['GET', 'POST'])
 def register():
     # Output message if something goes wrong...
     msg = ''
+
     # Check if "username", "password" and "email" POST requests exist (user submitted form)
     if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form:
         # Create variables for easy access
@@ -114,11 +130,11 @@ def register():
         password = request.form['password']
         email = request.form['email']
 
-
-# Check if account exists using MySQL
+        # Check if account exists using MySQL
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT * FROM accounts WHERE username = %s', (username,))
         account = cursor.fetchone()
+
         # If account exists show error and validation checks
         if account:
             msg = 'Account already exists!'
@@ -130,10 +146,16 @@ def register():
             msg = 'Please fill out the form!'
         else:
             # Hash the password
-            hash = password + app.secret_key
-            hash = hashlib.sha1(hash.encode())
-            password = hash.hexdigest()
-            # Account doesn't exist, and the form data is valid, so insert the new account into the accounts table
-            cursor.execute('INSERT INTO accounts VALUES (NULL, %s, %s, %s)', (username, password, email,))
+            hash_value = password + app.secret_key
+            hash_value = hashlib.sha1(hash_value.encode())
+            password_hashed = hash_value.hexdigest()
+
+            # Account doesn't exist, and the form data is valid,
+            # so insert the new account into the accounts table
+            cursor.execute('INSERT INTO accounts VALUES (NULL, %s, %s, %s)', (username, password_hashed, email,))
             mysql.connection.commit()
             msg = 'You have successfully registered!'
+
+    # Render the registration form template for both GET and POST requests
+    return render_template('register.html', msg=msg)
+
