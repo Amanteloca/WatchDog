@@ -123,11 +123,12 @@ def register():
     # Output message if something goes wrong...
     msg = ''
 
-    # Check if "username", "password" and "email" POST requests exist (user submitted form)
-    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form:
+    # Check if "username", "password", "confirm_password", and "email" POST requests exist (user submitted form)
+    if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'confirm_password' in request.form and 'email' in request.form:
         # Create variables for easy access
         username = request.form['username']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         email = request.form['email']
 
         # Check if account exists using MySQL
@@ -142,8 +143,10 @@ def register():
             msg = 'Invalid email address!'
         elif not re.match(r'[A-Za-z0-9]+', username):
             msg = 'Username must contain only characters and numbers!'
-        elif not username or not password or not email:
+        elif not username or not password or not confirm_password or not email:
             msg = 'Please fill out the form!'
+        elif password != confirm_password:
+            msg = 'Password and confirmation do not match!'
         else:
             # Hash the password
             hash_value = password + app.secret_key
