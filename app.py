@@ -174,3 +174,34 @@ def profile():
         return render_template('profile.html', account=account)
     # User is not logged in redirect to login page
     return redirect(url_for('login'))
+
+# Edit profile route
+@app.route('/pythonlogin/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    # Check if the user is logged in
+    if 'loggedin' in session:
+        # Fetch user details
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM accounts WHERE id = %s', (session['id'],))
+        user = cursor.fetchone()
+
+        if request.method == 'POST':
+            # Handle form submission to update the user's profile
+            new_username = request.form['username']
+            new_email = request.form['email']
+
+            # Perform necessary validation checks before updating
+
+            # Update the user's profile in the database
+            cursor.execute('UPDATE accounts SET username = %s, email = %s WHERE id = %s',
+                           (new_username, new_email, session['id']))
+            mysql.connection.commit()
+
+            # Redirect to the profile page after successful update
+            return redirect(url_for('profile'))
+
+        # Render the edit profile form with the current user details
+        return render_template('edit_profile.html', user=user)
+
+    # User is not logged in, redirect to the login page
+    return redirect(url_for('login'))
