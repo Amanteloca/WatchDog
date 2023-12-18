@@ -19,8 +19,8 @@ handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
 
-# Generate a random secret key for extra protection
-app.secret_key = secrets.token_hex(24)
+# Use a fixed secret key for the Flask app
+app.secret_key =' watch_dog_1'
 
 # Enter your database connection details below
 app.config['MYSQL_HOST'] = 'localhost'
@@ -63,7 +63,7 @@ def login():
         # Create variables for easy access
         username = request.form['username']
         password = request.form['password']
-        
+
         try:
             # Retrieve the hashed password
             # Encode password and secret_key as bytes
