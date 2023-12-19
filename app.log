@@ -42,3 +42,5 @@ Traceback (most recent call last):
 werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'profile'. Did you mean 'root' instead?
 Server Error: 500 Internal Server Error: The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.
 Page not found: /favicon.ico
+Page not found: /favicon.ico
+Error in login route: (2002, "Can't connect to local server through socket '/data/data/com.termux/files/usr/var/run/mysqld.sock' (111)")
