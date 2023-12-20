@@ -7,7 +7,7 @@ import re
 import hashlib
 import secrets
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder="templates")
 
 # Root route
 @app.route('/')
@@ -58,6 +58,7 @@ def home():
 def login():
     # Output a message if something goes wrong...
     msg = ''
+
     # Check if "username" and "password" POST requests exist (user submitted form)
     if request.method == 'POST' and 'username' in request.form and 'password' in request.form:
         # Create variables for easy access
@@ -91,12 +92,21 @@ def login():
                 session['id'] = account['id']
                 session['username'] = account['username']
 
-                # Redirect to home page
-                return redirect(url_for('home'))
+                # Check if the user has selected "Remember Me"
+                if 'remember' in request.form:
+                    # Create a response object to set the permanent cookie
+                    response = make_response(redirect(url_for('home')))
+                    response.set_cookie('username', username, max_age=30 * 24 * 60 * 60)  # 30 days expiration
+                    return response
+
+                # Redirect based on user role
+                if account['username'] == 'admin':
+                    return redirect(url_for('admin_dashboard'))
+                else:
+                    return redirect(url_for('home'))
             else:
                 # Account doesn't exist or username/password incorrect
                 msg = 'Incorrect username/password!'
-                print("Incorrect username/password!")
 
         except Exception as e:
             app.logger.error('Error in login route: %s', str(e))
@@ -104,7 +114,6 @@ def login():
 
     # Show the login form with message (if any)
     return render_template('index.html', msg=msg)
-
 
 # Logout route
 @app.route('/pythonlogin/logout')
@@ -116,6 +125,13 @@ def logout():
     # Redirect to login page
     return redirect(url_for('login'))
 
+
+# Function to check if any accounts exist
+def has_any_accounts():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute('SELECT COUNT(*) FROM accounts')
+    count = cursor.fetchone()['COUNT(*)']
+    return count > 0
 
 # Registration route
 @app.route('/pythonlogin/register', methods=['GET', 'POST'])
@@ -153,15 +169,25 @@ def register():
             hash_value = hashlib.sha1(hash_value.encode())
             password_hashed = hash_value.hexdigest()
 
+            # Set the default role
+            role = 'user'
+
+            # Check if this is the first account being created (admin)
+            if not has_any_accounts():
+                role = 'admin'
+
             # Account doesn't exist, and the form data is valid,
-            # so insert the new account into the accounts table
-            cursor.execute('INSERT INTO accounts VALUES (NULL, %s, %s, %s)', (username, password_hashed, email,))
+            # so insert the new account into the accounts table with the role
+            cursor.execute('INSERT INTO accounts VALUES (NULL, %s, %s, %s, %s)', (username, password_hashed, email, role,))
             mysql.connection.commit()
             msg = 'You have successfully registered!'
 
     # Render the registration form template for both GET and POST requests
     return render_template('register.html', msg=msg)
 
+
+
+# profile route 
 @app.route('/pythonlogin/profile')
 def profile():
     # Check if the user is logged in
@@ -205,3 +231,80 @@ def edit_profile():
 
     # User is not logged in, redirect to the login page
     return redirect(url_for('login'))
+
+
+# Admin route to manage accounts
+@app.route('/admin/manage_accounts')
+def manage_accounts():
+    try:
+        # Check if the user is logged in and is an admin
+        if 'loggedin' in session and 'username' in session and session['username'] == 'admin':
+            # Fetch all accounts from the database
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute('SELECT * FROM accounts')
+            accounts = cursor.fetchall()
+
+            # Render the admin view with the list of accounts
+            return render_template('admin/manage_accounts.html', accounts=accounts)
+        # If not logged in or not an admin, redirect to the login page
+        return redirect(url_for('login'))
+    except Exception as e:
+        app.logger.error('Error fetching accounts: %s', str(e))
+        app.logger.error('MySQL error: %s', cursor._last_executed)
+        return render_template('error.html', error=500), 500
+
+# Admin route to edit settings
+@app.route('/admin/edit_settings', methods=['GET', 'POST'])
+def edit_settings():
+    # Check if the user is logged in and is an admin
+    if 'loggedin' in session and 'username' in session and session['username'] == 'admin':
+        # Fetch current settings from the database
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT * FROM settings')
+        current_settings = cursor.fetchone()
+
+        if request.method == 'POST':
+            # Handle form submission to update settings in the database
+            new_setting_value = request.form['setting_value']
+
+            # Perform necessary validation checks before updating
+
+            # Update the settings in the database
+            cursor.execute('UPDATE settings SET setting_value = %s WHERE id = %s',
+                           (new_setting_value, current_settings['id']))
+            mysql.connection.commit()
+
+            # Redirect to the admin dashboard after successful update
+            return redirect(url_for('admin_dashboard'))
+
+        # Render the admin view with the current settings
+        return render_template('admin/edit_settings.html', current_settings=current_settings)
+    # If not logged in or not an admin, redirect to the login page
+    return redirect(url_for('login'))
+
+
+# Admin Dashboard route
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    # Render the admin_dashboard.html template
+    return render_template('admin/admin_dashboard.html')
+
+# Route to manage email templates
+@app.route('/admin/manage_email_templates')
+def manage_email_templates():
+    try:
+        # Check if the user is logged in and is an admin
+        if 'loggedin' in session and 'username' in session and session['username'] == 'admin':
+            # Fetch all email templates from the database
+            email_templates = EmailTemplate.query.all()
+
+            # Render the 'manage_email_template.html' template with the email templates
+            return render_template('manage_email_template.html', email_templates=email_templates)
+
+        # If not logged in or not an admin, redirect to the login page
+        return redirect(url_for('login'))
+
+    except Exception as e:
+        # Handle exceptions appropriately
+        app.logger.error('Error fetching email templates: %s', str(e))
+        return render_template('error.html', error=500), 500
