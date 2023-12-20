@@ -1,0 +1,21 @@
+{% extends 'admin_layout.html' %}
+
+{% block title %}Edit Settings{% endblock %}
+
+{% block content %}
+    <h1>Edit Settings</h1>
+
+    <!-- Add form for editing settings -->
+    <form method="post" action="{{ url_for('edit_settings') }}">
+        <!-- Add input fields for settings -->
+        <label for="setting_name">Setting Name:</label>
+        <input type="text" id="setting_name" name="setting_name" value="{{ setting.name }}" required>
+
+        <label for="setting_value">Setting Value:</label>
+        <input type="text" id="setting_value" name="setting_value" value="{{ setting.value }}" required>
+
+        <button type="submit">Save Settings</button>
+    </form>
+
+    <!-- Include your common scripts or link to a common JavaScript file -->
+{% endblock %}

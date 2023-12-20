@@ -1,0 +1,36 @@
+{% extends 'admin_layout.html' %}
+
+{% block title %}Manage User Accounts{% endblock %}
+
+{% block content %}
+    <h1>Manage User Accounts</h1>
+
+    <!-- Display the list of user accounts -->
+    <table>
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Username</th>
+                <!-- Add other fields you want to display -->
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for account in user_accounts %}
+                <tr>
+                    <td>{{ account.id }}</td>
+                    <td>{{ account.username }}</td>
+                    <!-- Add other fields you want to display -->
+                    <td>
+                        <a href="{{ url_for('edit_account', user_id=account.id) }}">Edit</a>
+                        <a href="{{ url_for('delete_account', user_id=account.id) }}">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Add buttons or links for creating new accounts, searching, sorting, etc. -->
+
+    <!-- Include your common scripts or link to a common JavaScript file -->
+{% endblock %}
