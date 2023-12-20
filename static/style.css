@@ -145,3 +145,18 @@ body.loggedin {
 	padding: 5px;
 	margin: 0 0 10px 0;
 }
+/* Style the label for the "Remember Me" checkbox */
+label[for="remember"] {
+    display: flex; /* Use flexbox for better control */
+    align-items: center; /* Align items vertically */
+    margin-bottom: 10px; /* Add some bottom margin for spacing */
+
+    /* Optional: Adjust font size, color, etc. */
+    font-size: 14px;
+    color: #333;
+}
+
+/* Style the checkbox itself */
+#remember {
+    margin-right: 5px; /* Adjust the spacing between the checkbox and the label text */
+}
