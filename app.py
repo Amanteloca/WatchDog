@@ -26,7 +26,7 @@ app.secret_key =' watch_dog_1'
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'pythonlogin'
+app.config['MYSQL_DB'] = 'watchdoglogin'
 
 # Initialize MySQL
 mysql = MySQL(app)
@@ -43,7 +43,7 @@ def internal_server_error(error):
     return render_template('error.html', error=500), 500
 
 # Home route
-@app.route('/pythonlogin/home')
+@app.route('/watchdoglogin/home')
 def home():
     # Check if the user is logged in
     if 'loggedin' in session:
@@ -54,7 +54,7 @@ def home():
 
 
 # Login route
-@app.route('/pythonlogin/', methods=['GET', 'POST'])
+@app.route('/watchdoglogin/', methods=['GET', 'POST'])
 def login():
     # Output a message if something goes wrong...
     msg = ''
@@ -116,7 +116,7 @@ def login():
     return render_template('index.html', msg=msg)
 
 # Logout route
-@app.route('/pythonlogin/logout')
+@app.route('/watchdoglogin/logout')
 def logout():
     # Remove session data, this will log the user out
     session.pop('loggedin', None)
@@ -134,7 +134,7 @@ def has_any_accounts():
     return count > 0
 
 # Registration route
-@app.route('/pythonlogin/register', methods=['GET', 'POST'])
+@app.route('/watchdoglogin/register', methods=['GET', 'POST'])
 def register():
     # Output message if something goes wrong...
     msg = ''
@@ -188,7 +188,7 @@ def register():
 
 
 # profile route 
-@app.route('/pythonlogin/profile')
+@app.route('/watchdoglogin/profile')
 def profile():
     # Check if the user is logged in
     if 'loggedin' in session:
@@ -202,7 +202,7 @@ def profile():
     return redirect(url_for('login'))
 
 # Edit profile route
-@app.route('/pythonlogin/edit_profile', methods=['GET', 'POST'])
+@app.route('/watchdoglogin/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
     # Check if the user is logged in
     if 'loggedin' in session:
